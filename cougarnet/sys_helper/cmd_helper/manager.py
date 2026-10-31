@@ -23,11 +23,12 @@ import os
 import socket
 import subprocess
 
-from cougarnet.globals import LIBEXEC_DIR
+from importlib import resources
+from cougarnet.globals import SYS_HELPER_MODULE
 from cougarnet.sys_helper.manager import SysHelperManager
 from cougarnet import util
 
-SYSCMD_HELPER_SCRIPT = os.path.join(LIBEXEC_DIR, 'syscmd_helper')
+SYSCMD_HELPER_SCRIPT = resources.files(SYS_HELPER_MODULE) / 'util' / "syscmd_helper"
 
 
 def _setup_unix_sock(local_addr, remote_addr):
@@ -51,17 +52,18 @@ class SysCmdHelperManager(SysHelperManager):
     commands.'''
 
     def __init__(self, remote_sock, local_sock, verbose=False):
-        pre_cmd = ['sudo', SYSCMD_HELPER_SCRIPT, '-h']
-        cmd = ['sudo', '-P', '-u', 'root',
-                '-g', f'#{os.getegid()}', SYSCMD_HELPER_SCRIPT]
+        with resources.as_file(SYSCMD_HELPER_SCRIPT) as script_path:
+            pre_cmd = ['sudo', str(script_path), '-h']
+            cmd = ['sudo', '-P', '-u', 'root',
+                    '-g', f'#{os.getegid()}', str(script_path)]
 
-        if verbose:
-            cmd.append('--verbose')
-        cmd.append(remote_sock)
-        super().__init__(cmd, pre_cmd)
-        self.remote_sock_path = remote_sock
-        self.local_sock_path = local_sock
-        self.sock = None
+            if verbose:
+                cmd.append('--verbose')
+            cmd.append(remote_sock)
+            super().__init__(cmd, pre_cmd)
+            self.remote_sock_path = remote_sock
+            self.local_sock_path = local_sock
+            self.sock = None
 
     def start(self):
         '''Start the helper process.  If it started successfully, then also

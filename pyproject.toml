@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cougarnet"
+version = "0.0.0"
+description = "Network virtualization tool suite for Linux"
+authors = [
+    { name = "Casey Deccio", email = "casey@deccio.net" },
+]
+readme = "README.md"
+license = "GPL-2.0-only"
+license-files = ["LICENSE", "COPYRIGHT"]
+requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://github.com/cdeccio/cougarnet/"
+
+[project.scripts]
+cougarnet = "cougarnet.virtualnet:main"
+
+[tool.setuptools.packages.find]
+include = ["cougarnet*"]
+exclude = ["sys_helper/util*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+cougarnet = ["sys_helper/util/*"]

@@ -21,34 +21,34 @@ socket and sends them to a UNIX domain socket, and vice-versa.'''
 
 import os
 
-from cougarnet.globals import LIBEXEC_DIR
+from importlib import resources
+from cougarnet.globals import SYS_HELPER_MODULE
 from cougarnet.sys_helper.manager import SysHelperManager
 
-RAWPKT_HELPER_SCRIPT = os.path.join(LIBEXEC_DIR, 'rawpkt_helper')
-
+RAWPKT_HELPER_SCRIPT = resources.files(SYS_HELPER_MODULE) / 'util' / 'rawpkt_helper'
 
 class RawPktHelperManager(SysHelperManager):
     '''A class for creating and managing a process that captures packets from a
     raw socket and sends them to a UNIX domain socket, and vice-versa.'''
 
     def __init__(self, pid, *ints):
-        cmd = ['nsenter', '--target', str(pid), '--all',
-               RAWPKT_HELPER_SCRIPT]
-        dir1, dir2, new_ints = self.consolidate_dirs(ints)
-        if dir1 and dir2:
-            # Use the --raw-sock-directory and --user-sock-directory options to
-            # shorten the length of the command-line arguments.  If there is a
-            # common directory across all raw socket paths and a common
-            # directory across all raw socket paths, consolidate_dirs() will
-            # find those common directories, use them as command-line options,
-            # and then use only the relativized paths.
-            cmd += ['--raw-sock-directory', dir1,
-                    '--user-sock-directory', dir2]
-            cmd += new_ints
-        else:
-            cmd += ints
+        with resources.as_file(RAWPKT_HELPER_SCRIPT) as script_path:
+            cmd = ['nsenter', '--target', str(pid), '--all', str(script_path)]
+            dir1, dir2, new_ints = self.consolidate_dirs(ints)
+            if dir1 and dir2:
+                # Use the --raw-sock-directory and --user-sock-directory options to
+                # shorten the length of the command-line arguments.  If there is a
+                # common directory across all raw socket paths and a common
+                # directory across all raw socket paths, consolidate_dirs() will
+                # find those common directories, use them as command-line options,
+                # and then use only the relativized paths.
+                cmd += ['--raw-sock-directory', dir1,
+                        '--user-sock-directory', dir2]
+                cmd += new_ints
+            else:
+                cmd += ints
 
-        super().__init__(cmd)
+            super().__init__(cmd)
 
     @classmethod
     def consolidate_dirs(cls, ints):
